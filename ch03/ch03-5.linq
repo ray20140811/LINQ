@@ -1,35 +1,41 @@
 <Query Kind="Program" />
 
 /*
-	Title: Listing 3-1 & Listing 3-2
+	Title: Listing 3-3 & Listing 3-4
 */
 
 void Main()
 {
 	List<Contact> contacts = Contact.SampleData();
+	List<CallLog> callLog = CallLog.SampleData();
 	
 	Console.WriteLine("=====extension method query syntax start=====");
-	//extension method query syntax
-	var q = contacts.Where(c => c.State == "WA")
-					.OrderBy(c => c.LastName)
-					.ThenBy(c => c.FirstName);
+	//extension method syntax
+	var q = callLog.Join(contacts, 
+							call => call.Number,
+							contact => contact.Phone,
+							(call, contact) => new 
+							{
+								contact.FirstName,
+								contact.LastName,
+								call.When,
+								call.Duration
+							})
+							.OrderByDescending(call => call.When)
+							.Take(5);
+	contacts.Dump();
+	callLog.Dump();
+	q.Dump();
 	
-	foreach(Contact c in q)
+	foreach(var call in q)
 	{
-		Console.WriteLine("{0} {1}", c.FirstName, c.LastName);
+		Console.WriteLine("{0} - {1} {2} {3}min", 
+							call.When.ToString("ddMMM HH:mm"),
+							call.FirstName,
+							call.LastName,
+							call.Duration);
 	}
-	Console.WriteLine("=====extension method query syntax end=====");
-	Console.WriteLine("=====query expression syntax start=====");
-	//query expression syntax
-	var g = from c in contacts
-			where c.State == "WA"
-			orderby c.LastName, c.FirstName
-			select c;
-			
-	foreach(Contact c in g)
-	{
-		Console.WriteLine("{0} {1}", c.FirstName, c.LastName);
-	}
+	
 }
 
 public class Contact
